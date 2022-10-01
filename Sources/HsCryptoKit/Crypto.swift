@@ -69,6 +69,64 @@ public struct Crypto {
         return publicKey(pubKeyPoint, compressed: compressed)
     }
 
+    public static func sign(data: Data, privateKey: Data, compact: Bool = false) throws -> Data {
+        precondition(data.count > 0, "Data must be non-zero size")
+        precondition(privateKey.count > 0, "PrivateKey must be non-zero size")
+
+        let ctx = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN))!
+        defer { secp256k1_context_destroy(ctx) }
+
+        let signature = UnsafeMutablePointer<secp256k1_ecdsa_signature>.allocate(capacity: 1)
+        let status = data.withUnsafeBytes { ptr in
+            privateKey.withUnsafeBytes { secp256k1_ecdsa_sign(ctx, signature, ptr.baseAddress!.assumingMemoryBound(to: UInt8.self), $0.baseAddress!.assumingMemoryBound(to: UInt8.self), nil, nil) }
+        }
+        guard status == 1 else { throw SignError.signFailed }
+
+        let normalizedsig = UnsafeMutablePointer<secp256k1_ecdsa_signature>.allocate(capacity: 1)
+        defer {
+            signature.deallocate()
+            normalizedsig.deallocate()
+        }
+
+        secp256k1_ecdsa_signature_normalize(ctx, normalizedsig, signature)
+
+        var length: size_t = compact ? 64 : 128
+        var der = Data(count: length)
+        guard der.withUnsafeMutableBytes({
+            if compact {
+                return secp256k1_ecdsa_signature_serialize_compact(ctx, $0.baseAddress!.assumingMemoryBound(to: UInt8.self), normalizedsig)
+            } else {
+                return secp256k1_ecdsa_signature_serialize_der(ctx, $0.baseAddress!.assumingMemoryBound(to: UInt8.self), &length, normalizedsig)
+            }
+        }) == Int32(1) else {
+            throw SignError.noEnoughSpace
+            
+        }
+        der.count = length
+
+        return der
+    }
+
+    public static func ellipticSign(_ hash: Data, privateKey: Data) throws -> Data {
+        let encrypter = EllipticCurveEncrypterSecp256k1()
+        guard var signatureInInternalFormat = encrypter.sign(hash: hash, privateKey: privateKey) else {
+            throw SignError.signFailed
+        }
+        return encrypter.export(signature: &signatureInInternalFormat)
+    }
+
+    public static func ellipticIsValid(signature: Data, of hash: Data, publicKey: Data, compressed: Bool) -> Bool {
+        guard let recoveredPublicKey = self.ellipticPublicKey(signature: signature, of: hash, compressed: compressed) else { return false }
+        return recoveredPublicKey == publicKey
+    }
+
+    public static func ellipticPublicKey(signature: Data, of hash: Data, compressed: Bool) -> Data? {
+        let encrypter = EllipticCurveEncrypterSecp256k1()
+        var signatureInInternalFormat = encrypter.import(signature: signature)
+        guard var publicKeyInInternalFormat = encrypter.publicKey(signature: &signatureInInternalFormat, hash: hash) else { return nil }
+        return encrypter.export(publicKey: &publicKeyInInternalFormat, compressed: compressed)
+    }
+
 }
 
 public extension Crypto {
@@ -103,4 +161,9 @@ enum SecpResult {
             self = .failure
         }
     }
+}
+
+public enum SignError: Error {
+    case signFailed
+    case noEnoughSpace
 }
