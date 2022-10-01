@@ -5,12 +5,12 @@ import secp256k1
 
 public struct Crypto {
 
-    static func hmacSha512(_ data: Data, key: Data = "Bitcoin seed".data(using: .ascii)!) -> Data {
+    public static func hmacSha512(_ data: Data, key: Data = "Bitcoin seed".data(using: .ascii)!) -> Data {
         let symmetricKey = SymmetricKey(data: key)
         return Data(HMAC<SHA512>.authenticationCode(for: data, using: symmetricKey))
     }
 
-    static func deriveKey(password: String, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
+    public static func deriveKey(password: String, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
         var derivedKey = Data(repeating: 0, count: keyLength)
 
         if derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
@@ -34,7 +34,7 @@ public struct Crypto {
         return derivedKey
     }
 
-    static func publicKey(_ publicKey: secp256k1_pubkey, compressed: Bool) -> Data {
+    public static func publicKey(_ publicKey: secp256k1_pubkey, compressed: Bool) -> Data {
         var outputLen: Int = compressed ? 33 : 65
 
         let context = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY))!
@@ -55,7 +55,7 @@ public struct Crypto {
         return output
     }
 
-    static func publicKey(privateKey: Data, compressed: Bool) -> Data {
+    public static func publicKey(privateKey: Data, compressed: Bool) -> Data {
         let privateKey = privateKey.bytes
         var pubKeyPoint = secp256k1_pubkey()
 
