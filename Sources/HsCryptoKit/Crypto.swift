@@ -147,6 +147,10 @@ public extension Crypto {
         ripeMd160(sha256(data))
     }
 
+    static func sha3(_ data: Data) -> Data {
+        Sha3.keccak256(data)
+    }
+
 }
 
 enum SecpResult {
