@@ -16,4 +16,9 @@ iOs Example/Pods/*
 xcuserdata
 !Podfile.lock
 .idea/
+
+# SPM
+
+Package.resolved
+.swiftpm
 .build/

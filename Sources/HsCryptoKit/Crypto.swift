@@ -2,6 +2,7 @@ import Foundation
 import Crypto
 import CommonCrypto
 import secp256k1
+import HsExtensions
 
 public struct Crypto {
 
@@ -56,7 +57,7 @@ public struct Crypto {
     }
 
     public static func publicKey(privateKey: Data, compressed: Bool) -> Data {
-        let privateKey = privateKey.bytes
+        let privateKey = privateKey.hs.bytes
         var pubKeyPoint = secp256k1_pubkey()
 
         let context = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY))!
