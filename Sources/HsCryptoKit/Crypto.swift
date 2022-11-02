@@ -38,10 +38,7 @@ public struct Crypto {
     public static func publicKey(_ publicKey: secp256k1_pubkey, compressed: Bool) -> Data {
         var outputLen: Int = compressed ? 33 : 65
 
-        let context = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY))!
-        defer {
-            secp256k1_context_destroy(context)
-        }
+        let context = secp256k1.Context.raw
 
         var publicKey = publicKey
         var output = Data(count: outputLen)
@@ -60,10 +57,7 @@ public struct Crypto {
         let privateKey = privateKey.hs.bytes
         var pubKeyPoint = secp256k1_pubkey()
 
-        let context = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY))!
-        defer {
-            secp256k1_context_destroy(context)
-        }
+        let context = secp256k1.Context.raw
         _ = SecpResult(secp256k1_ec_pubkey_create(context, &pubKeyPoint, privateKey))
 
 
@@ -74,8 +68,7 @@ public struct Crypto {
         precondition(data.count > 0, "Data must be non-zero size")
         precondition(privateKey.count > 0, "PrivateKey must be non-zero size")
 
-        let ctx = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN))!
-        defer { secp256k1_context_destroy(ctx) }
+        let ctx = secp256k1.Context.raw
 
         let signature = UnsafeMutablePointer<secp256k1_ecdsa_signature>.allocate(capacity: 1)
         let status = data.withUnsafeBytes { ptr in
