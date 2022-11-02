@@ -7,11 +7,7 @@ final class EllipticCurveEncrypterSecp256k1 {
     private let context: OpaquePointer
 
     init() {
-        context = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY))!
-    }
-
-    deinit {
-        secp256k1_context_destroy(context)
+        context = secp256k1.Context.raw
     }
 
     /// Signs the hash with the private key. Produces signature data structure that can be exported with
@@ -97,4 +93,5 @@ final class EllipticCurveEncrypterSecp256k1 {
         }
         return output
     }
+
 }
