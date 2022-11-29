@@ -12,6 +12,7 @@ public struct Crypto {
     }
 
     public static func deriveKey(password: String, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
+        let passwordData = password.data(using: .utf8)!
         var derivedKey = Data(repeating: 0, count: keyLength)
 
         if derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
@@ -21,7 +22,7 @@ public struct Crypto {
 
                 return CCKeyDerivationPBKDF(
                         CCPBKDFAlgorithm(kCCPBKDF2),
-                        password, password.count,
+                        password, passwordData.count,
                         saltPointer, salt.count,
                         CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512),
                         UInt32(iterations),
