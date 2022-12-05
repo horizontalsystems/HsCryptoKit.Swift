@@ -36,6 +36,30 @@ public struct Crypto {
         return derivedKey
     }
 
+    public static func deriveKeyNonStandard(password: String, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
+        var derivedKey = Data(repeating: 0, count: keyLength)
+
+        if derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
+            salt.withUnsafeBytes { saltBytes -> Int32 in
+                guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
+                guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 1 }
+
+                return CCKeyDerivationPBKDF(
+                        CCPBKDFAlgorithm(kCCPBKDF2),
+                        password, password.count,
+                        saltPointer, salt.count,
+                        CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512),
+                        UInt32(iterations),
+                        derivedKeyPointer, keyLength)
+            }
+        }) != 0 {
+            print("=> Can't derive key!")
+            return nil
+        }
+
+        return derivedKey
+    }
+
     public static func publicKey(_ publicKey: secp256k1_pubkey, compressed: Bool) -> Data {
         var outputLen: Int = compressed ? 33 : 65
 
