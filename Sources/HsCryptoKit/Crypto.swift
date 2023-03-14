@@ -145,6 +145,34 @@ public struct Crypto {
         guard var publicKeyInInternalFormat = encrypter.publicKey(signature: &signatureInInternalFormat, hash: hash) else { return nil }
         return encrypter.export(publicKey: &publicKeyInInternalFormat, compressed: compressed)
     }
+    
+    public static func addEllipticCurvePoints(a: secp256k1_pubkey, b: secp256k1_pubkey) throws -> secp256k1_pubkey {
+        var storage = ContiguousArray<secp256k1_pubkey>()
+        let pointers = UnsafeMutablePointer< UnsafePointer<secp256k1_pubkey>? >.allocate(capacity: 2)
+        defer {
+            pointers.deinitialize(count: 2)
+            pointers.deallocate()
+        }
+        storage.append(a)
+        storage.append(b)
+        
+        for i in 0 ..< 2 {
+            withUnsafePointer(to: &storage[i]) { (ptr) -> Void in
+                pointers.advanced(by: i).pointee = ptr
+            }
+        }
+        let immutablePointer = UnsafePointer(pointers)
+        
+        // Combine to points to found new point (new public Key)
+        var combinedKey = secp256k1_pubkey()
+        if withUnsafeMutablePointer(to: &combinedKey, { (combinedKeyPtr: UnsafeMutablePointer<secp256k1_pubkey>) -> Int32 in
+            secp256k1_ec_pubkey_combine(secp256k1.Context.raw, combinedKeyPtr, immutablePointer, 2)
+        }) == 0 {
+            throw SignError.additionError
+        }
+
+        return combinedKey
+    }
 
 }
 
@@ -189,4 +217,5 @@ enum SecpResult {
 public enum SignError: Error {
     case signFailed
     case noEnoughSpace
+    case additionError
 }
