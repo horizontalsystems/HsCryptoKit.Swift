@@ -72,7 +72,7 @@ public enum Crypto {
     public static func publicKey(_ publicKey: secp256k1_pubkey, compressed: Bool) -> Data {
         var outputLen: Int = compressed ? 33 : 65
 
-        let context = secp256k1.Context.raw
+        let context = secp256k1.Context.rawRepresentation
 
         var publicKey = publicKey
         var output = Data(count: outputLen)
@@ -93,7 +93,7 @@ public enum Crypto {
         case .secp256k1:
             var pubKeyPoint = secp256k1_pubkey()
 
-            let context = secp256k1.Context.raw
+            let context = secp256k1.Context.rawRepresentation
             _ = SecpResult(secp256k1_ec_pubkey_create(context, &pubKeyPoint, privateKey))
 
             return publicKey(pubKeyPoint, compressed: compressed)
@@ -110,7 +110,7 @@ public enum Crypto {
         precondition(data.count > 0, "Data must be non-zero size")
         precondition(privateKey.count > 0, "PrivateKey must be non-zero size")
 
-        let ctx = secp256k1.Context.raw
+        let ctx = secp256k1.Context.rawRepresentation
 
         let signature = UnsafeMutablePointer<secp256k1_ecdsa_signature>.allocate(capacity: 1)
         let status = data.withUnsafeBytes { ptr in
@@ -182,7 +182,7 @@ public enum Crypto {
         // Combine to points to found new point (new public Key)
         var combinedKey = secp256k1_pubkey()
         if withUnsafeMutablePointer(to: &combinedKey, { (combinedKeyPtr: UnsafeMutablePointer<secp256k1_pubkey>) -> Int32 in
-            secp256k1_ec_pubkey_combine(secp256k1.Context.raw, combinedKeyPtr, immutablePointer, 2)
+            secp256k1_ec_pubkey_combine(secp256k1.Context.rawRepresentation, combinedKeyPtr, immutablePointer, 2)
         }) == 0 {
             throw SignError.additionError
         }
