@@ -40,15 +40,15 @@ struct BatchedCollection<Base: Collection>: Collection {
     }
 
     var startIndex: Index {
-        return Index(range: base.startIndex..<nextBreak(after: base.startIndex))
+        return Index(range: base.startIndex ..< nextBreak(after: base.startIndex))
     }
 
     var endIndex: Index {
-        return Index(range: base.endIndex..<base.endIndex)
+        return Index(range: base.endIndex ..< base.endIndex)
     }
 
     func index(after idx: Index) -> Index {
-        return Index(range: idx.range.upperBound..<nextBreak(after: idx.range.upperBound))
+        return Index(range: idx.range.upperBound ..< nextBreak(after: idx.range.upperBound))
     }
 
     subscript(idx: Index) -> Base.SubSequence {
@@ -63,14 +63,13 @@ extension Collection {
 }
 
 extension Collection where Self.Element == UInt8, Self.Index == Int {
-
     // Big endian order
-    var uInt64Array: Array<UInt64> {
+    var uInt64Array: [UInt64] {
         if isEmpty {
             return []
         }
 
-        var result = Array<UInt64>(reserveCapacity: 32)
+        var result = [UInt64](reserveCapacity: 32)
         for idx in stride(from: startIndex, to: endIndex, by: 8) {
             let val = UInt64(bytes: self, fromIndex: idx).bigEndian
             result.append(val)
