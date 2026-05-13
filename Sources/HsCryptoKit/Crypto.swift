@@ -102,7 +102,7 @@ public enum Crypto {
             let pubKey = privKey?.publicKey
             return pubKey?.rawRepresentation ?? Data()
 
-            //Todo: not working
+            // TODO: not working
         }
     }
 
@@ -164,7 +164,7 @@ public enum Crypto {
 
     public static func addEllipticCurvePoints(a: secp256k1_pubkey, b: secp256k1_pubkey) throws -> secp256k1_pubkey {
         var storage = ContiguousArray<secp256k1_pubkey>()
-        let pointers = UnsafeMutablePointer< UnsafePointer<secp256k1_pubkey>? >.allocate(capacity: 2)
+        let pointers = UnsafeMutablePointer<UnsafePointer<secp256k1_pubkey>?>.allocate(capacity: 2)
         defer {
             pointers.deinitialize(count: 2)
             pointers.deallocate()
@@ -173,7 +173,7 @@ public enum Crypto {
         storage.append(b)
 
         for i in 0 ..< 2 {
-            withUnsafePointer(to: &storage[i]) { (ptr) -> Void in
+            withUnsafePointer(to: &storage[i]) { ptr in
                 pointers.advanced(by: i).pointee = ptr
             }
         }
@@ -189,7 +189,6 @@ public enum Crypto {
 
         return combinedKey
     }
-
 }
 
 public extension Crypto {

@@ -1,8 +1,7 @@
-import XCTest
 @testable import HsCryptoKit
+import XCTest
 
 final class CryptoKitTests: XCTestCase {
-
     func testKeccak() throws {
         let input = "cc".hs.hexData!
         let result = "eead6dbfc7340a56caedc044696a168870549a6a7f6f56961e84a54bd9970b8a".hs.hexData!
@@ -16,5 +15,4 @@ final class CryptoKitTests: XCTestCase {
 
         XCTAssertEqual(Crypto.sha3(input), result)
     }
-
 }

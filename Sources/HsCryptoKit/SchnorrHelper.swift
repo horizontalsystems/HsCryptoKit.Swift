@@ -1,10 +1,10 @@
-import Foundation
-import secp256k1
-import Crypto
 import BigInt
+import Crypto
+import Foundation
 import HsCryptoKitC
+import secp256k1
 
-public struct SchnorrHelper {
+public enum SchnorrHelper {
     static var magic: (UInt8, UInt8, UInt8, UInt8) { (218, 111, 179, 140) }
 
     // https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#specification
@@ -54,15 +54,15 @@ public struct SchnorrHelper {
 
         secp256k1_fe_normalize_var(&xCoordinateField)
         secp256k1_fe_normalize_var(&yCoordinateField)
-        
+
         var keyBytes = [UInt8](repeating: 0, count: 64)
 
         secp256k1_fe_get_b32(&keyBytes[0], &xCoordinateField)
         secp256k1_fe_get_b32(&keyBytes[32], &yCoordinateField)
 
-        return Data(from: SECP256K1_TAG_PUBKEY_UNCOMPRESSED)[0..<1] + Data(keyBytes)
+        return Data(from: SECP256K1_TAG_PUBKEY_UNCOMPRESSED)[0 ..< 1] + Data(keyBytes)
     }
-    
+
     public static func hashTweak(data: Data, tag: String) throws -> Data {
         let tagBytes: [UInt8] = tag.data(using: .utf8)!.bytes
 
@@ -73,8 +73,8 @@ public struct SchnorrHelper {
     public static func tweakedOutputKey(publicKey: Data) throws -> Data {
         // internal_key = lift_x(derived_key)
         // hashTapTweak(bytes(P))
-        let internalKeyBytes: [UInt8] = try liftX(x: publicKey[1..<33]).bytes
-        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1..<33]), tag: "TapTweak")
+        let internalKeyBytes: [UInt8] = try liftX(x: publicKey[1 ..< 33]).bytes
+        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1 ..< 33]), tag: "TapTweak")
 
         // int(hashTapTweak(bytes(P)))G
         var tweakedPublicKey = secp256k1_pubkey()
@@ -101,14 +101,14 @@ public struct SchnorrHelper {
             throw SchnorrError.keyTweakError
         }
 
-        return Data(outputKeyBytes[1..<33])
+        return Data(outputKeyBytes[1 ..< 33])
     }
 
     public static func tweakedPrivateKey(privateKey: Data, publicKey: Data) throws -> Data {
         // internal_key = lift_x(derived_key)
         // hashTapTweak(bytes(P))
-        let internalKeyBytes: [UInt8] = try liftX(x: publicKey[1..<33]).bytes
-        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1..<33]), tag: "TapTweak")
+        let internalKeyBytes: [UInt8] = try liftX(x: publicKey[1 ..< 33]).bytes
+        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1 ..< 33]), tag: "TapTweak")
 
         // int(hashTapTweak(bytes(P)))G
         var tweakedPublicKey = secp256k1_pubkey()
@@ -130,7 +130,8 @@ public struct SchnorrHelper {
         let outputKey = try Crypto.addEllipticCurvePoints(a: internalKey, b: tweakedPublicKey)
         var privateBytes: [UInt8] = privateKey.bytes
         guard secp256k1_ec_seckey_tweak_add(secp256k1.Context.raw, &privateBytes, tweakedHash.bytes) == 1,
-              secp256k1_ec_seckey_verify(secp256k1.Context.raw, privateBytes) == 1 else {
+              secp256k1_ec_seckey_verify(secp256k1.Context.raw, privateBytes) == 1
+        else {
             throw SchnorrError.privateKeyTweakError
         }
 
@@ -152,7 +153,8 @@ public struct SchnorrHelper {
             }
 
             guard secp256k1_ec_seckey_tweak_add(secp256k1.Context.raw, &privateBytes, tweakedHash.bytes) == 1,
-                  secp256k1_ec_seckey_verify(secp256k1.Context.raw, privateBytes) == 1 else {
+                  secp256k1_ec_seckey_verify(secp256k1.Context.raw, privateBytes) == 1
+            else {
                 throw SchnorrError.privateKeyTweakError
             }
         }
@@ -165,7 +167,7 @@ public struct SchnorrHelper {
         var message: [UInt8] = data.bytes
 
         let auxRandPointer = UnsafeMutableRawPointer.allocate(byteCount: 32, alignment: MemoryLayout<UInt8>.alignment)
-        for i in 0..<32 {
+        for i in 0 ..< 32 {
             auxRandPointer.storeBytes(of: 0x00, toByteOffset: i, as: UInt8.self)
         }
 
@@ -188,5 +190,4 @@ public struct SchnorrHelper {
         case keyTweakError
         case signError
     }
-
 }
